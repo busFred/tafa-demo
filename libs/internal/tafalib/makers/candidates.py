@@ -12,6 +12,7 @@ def make_feature_masks(
     n_masks: int,
     min_features: int,
     max_features: Optional[int],
+    generator: Optional[th.Generator],
 ) -> th.Tensor:
     """make random subset feature masks
 
@@ -20,6 +21,7 @@ def make_feature_masks(
         n_masks (int): number of masks
         min_features (int): minimum number of features enabled in each mask
         max_features (Optional[int]): maximum number of features enabled in each masks; `max_features = n_covs` if `None`
+        generator (Optional[th.Generator]): random generator
 
     Returns:
         th.Tensor: (n_masks_actual, n_covs) feature masks
@@ -35,7 +37,8 @@ def make_feature_masks(
     bincnt_fcs: th.Tensor = th.as_tensor(bincnt_fcs_l, dtype=th.long)
     ps: th.Tensor = th.ones_like(bincnt_fcs, dtype=th.float32)
     nfc_from_each_binned_fcs: th.Tensor = th.bincount(
-        th.multinomial(ps, n_masks, replacement=True), minlength=len(bincnt_fcs)
+        th.multinomial(ps, n_masks, replacement=True, generator=generator),
+        minlength=len(bincnt_fcs),
     )
     # in case number of actions in any of the bin exceeds maximum number of actions
     _curr_bincnts: th.Tensor = nfc_from_each_binned_fcs
@@ -49,6 +52,7 @@ def make_feature_masks(
                 _tmp_ps,
                 int(th.sum(_realloc_cnts).item()),
                 replacement=True,
+                generator=generator,
             ),
             minlength=len(bincnt_fcs),
         )
@@ -64,7 +68,7 @@ def make_feature_masks(
         _nfeats: int = _k + min_features
         while len(_fcs_set) < _count:
             _fc_l: list[int] = th.multinomial(
-                th.ones((n_covs,)), num_samples=_nfeats
+                th.ones((n_covs,)), num_samples=_nfeats, generator=generator
             ).tolist()
             _fc_l.sort()
             # ensure _ctmpl_fcs are all unique entries
@@ -86,6 +90,7 @@ def make_template_candidates(
     n_cands_targ: int,
     min_features: int,
     max_features: Optional[int],
+    generator: Optional[th.Generator],
 ) -> th.Tensor:
     """make random candidate set of subset feature masks
 
@@ -95,10 +100,12 @@ def make_template_candidates(
         n_cands_targ (int): number of candidate feature masks
         min_features (int): minimum number of features enabled in each mask
         max_features (Optional[int]): maximum number of features enabled in each masks; `max_features = n_covs` if `None`
+        generator (Optional[th.Generator]): random generator
 
     Returns:
         th.Tensor: (n_cands_actual, n_covs) feature masks
     """
+    generator = th.default_generator if generator is None else generator
     bincnt_fcs_l: list[int] = [
         # in order to accomondate for init_fidx,
         # both n_covs and i is one less than desired n_feats
@@ -111,7 +118,8 @@ def make_template_candidates(
     bincnt_fcs: th.Tensor = th.as_tensor(bincnt_fcs_l, dtype=th.long)
     ps: th.Tensor = th.ones_like(bincnt_fcs, dtype=th.float32)
     nfc_from_each_binned_fcs: th.Tensor = th.bincount(
-        th.multinomial(ps, n_cands, replacement=True), minlength=len(bincnt_fcs)
+        th.multinomial(ps, n_cands, replacement=True, generator=generator),
+        minlength=len(bincnt_fcs),
     )
     # in case number of actions in any of the bin exceeds maximum number of actions
     _curr_bincnts: th.Tensor = nfc_from_each_binned_fcs
@@ -125,6 +133,7 @@ def make_template_candidates(
                 _tmp_ps,
                 int(th.sum(_realloc_cnts).item()),
                 replacement=True,
+                generator=generator,
             ),
             minlength=len(bincnt_fcs),
         )
@@ -140,7 +149,7 @@ def make_template_candidates(
         _nfeats: int = _k + min_features
         while len(_fcs_set) < _count:
             _fc_l: list[int] = th.multinomial(
-                th.ones((n_covs,)), num_samples=_nfeats
+                th.ones((n_covs,)), num_samples=_nfeats, generator=generator
             ).tolist()
             # make sure initial feature is in fcomb
             if init_fidx not in _fc_l:

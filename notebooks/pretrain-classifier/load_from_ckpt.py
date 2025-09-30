@@ -35,7 +35,11 @@ n_labels: int = len(th.unique(tdata["ys"]))
 
 # %%
 tmpls: th.Tensor = tafalib.makers.candidates.make_feature_masks(
-    n_covs=n_covs, n_masks=run_cfg.n_masks, min_features=1, max_features=None
+    n_covs=n_covs,
+    n_masks=run_cfg.n_masks,
+    min_features=1,
+    max_features=None,
+    generator=th.default_generator,
 )
 
 # %%

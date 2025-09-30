@@ -7,12 +7,10 @@ from typing import Optional
 import _classifiers
 import lightning as pl
 import lightning.fabric.loggers as plf_loggers
-import mydatasets.aaco
-import mymodels.classifiers
+import mydatasets
+import mymodels
 import pandas as pd
-import tafalib.functional
-import tafalib.makers.templates
-import tafalib.utils
+import tafalib
 import tensordict as thd
 import torch as th
 import torchmetrics as thm
@@ -90,7 +88,7 @@ plf = pl.Fabric(loggers=[tfb_logger, csv_logger], accelerator="cpu")
 
 # %%
 if init_fidx is None:
-    init_fidx, bestfm = tafalib.makers.templates.identify_init_fidx(
+    init_fidx, bestfm = tafalib.initial_features.identify_init_fidx(
         tdata=tdata,
         classifier=tclassifier,
         max_features=max_features_targ,
@@ -102,7 +100,7 @@ if init_fidx is None:
     )
 
 # %%
-tmpls = tafalib.makers.templates.practical_serach_templates(
+tmpls = tafalib.makers.templates.practical_templates_search(
     tdata=tdata,
     max_tdata=max_tdata,
     classifier=tclassifier,
@@ -176,7 +174,7 @@ metrics_func.reset()
 snfobsd_l: list[int] = list()
 snfcomb_l: list[int] = list()
 for _data in vdata:
-    _pyhat, _fobsd_l, _fcomb = tafalib.utils.run_one_episode_all_obsd(
+    _pyhat, _fobsd_l, _fcomb = tafalib.utils.run_one_episode(
         x=_data["xs"],
         classifier=vclassifier,
         cost_est=lambda x: tafalib.functional.knn_cost_est(
@@ -214,7 +212,7 @@ metrics_func.reset()
 snfobsd_l: list[int] = list()
 snfcomb_l: list[int] = list()
 for _data in vdata:
-    _pyhat, _fobsd_l, _fcomb = tafalib.utils.run_one_episode_all_obsd(
+    _pyhat, _fobsd_l, _fcomb = tafalib.utils.run_one_episode(
         x=_data["xs"],
         classifier=tclassifier,
         cost_est=lambda x: tafalib.functional.knn_cost_est(
