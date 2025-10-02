@@ -66,6 +66,9 @@ def make_feature_masks(
         if _count == 0:
             continue
         _nfeats: int = _k + min_features
+        if _nfeats == 0:
+            _fcs_set.add(tuple())
+            continue
         while len(_fcs_set) < _count:
             _fc_l: list[int] = th.multinomial(
                 th.ones((n_covs,)), num_samples=_nfeats, generator=generator
